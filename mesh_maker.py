@@ -1,5 +1,6 @@
 from pprint import pprint
 import numpy as np
+import matplotlib.pyplot as plt
 '''
     |~~|~~|~~|~~|~~|~~| -
     | /| /| /| /| /| /| |
@@ -12,7 +13,7 @@ n   1  2  3  4  5  6  7 |
 
 class Node: # TODO: find a better name
 
-    def __init__(self, length, layers, n_spines):
+    def __init__(self, length, height, layers, n_spines):
         '''
         Creates 2 matrices for mapping elements:
         - l: matrix mapping (element_idx, local velocity node number) to its global node number
@@ -27,6 +28,7 @@ class Node: # TODO: find a better name
         2 matrices l and c
         '''
         self.length = length
+        self.height = height
         self.n_spines = n_spines
         self.layers = layers
 
@@ -86,7 +88,8 @@ class Node: # TODO: find a better name
         '''
         for gn in range(self.num_global_nodes):
             col, row = gn // self.offset, gn % self.offset
-            self.s[gn] = (col * self.length / (self.n_spines - 1), row)
+            h = self.spine_height(col)
+            self.s[gn] = (col * self.length / (self.n_spines - 1), row / (2 * self.layers) * h)
         
     def element_to_global(self, element_idx):
         '''
@@ -100,5 +103,24 @@ class Node: # TODO: find a better name
         '''
         return self.s[global_node] # list, so that it's mutable
     
+    def plot(self):
+        fig, ax = plt.subplots(figsize=(8, 5))
+        ax.set_aspect('equal')
 
-Node(10, 2, 5)
+        xs = [coord[0] for coord in self.s]
+        ys = [coord[1] for coord in self.s]
+
+        for nodes in self.l:
+            for a, b in [(0,1),(1,2),(2,0)]:
+                ax.plot([xs[nodes[a]], xs[nodes[b]]], [ys[nodes[a]], ys[nodes[b]]], 'b-', lw=1)
+            for gn in nodes:
+                ax.plot(xs[gn], ys[gn], 'ko', ms=4)
+                ax.text(xs[gn], ys[gn], str(gn), fontsize=9, ha='center', va='bottom', color='purple')
+
+        ax.set_title('Mesh')
+        plt.show()
+
+
+    
+
+Node(10, 6, 2, 19).plot()
