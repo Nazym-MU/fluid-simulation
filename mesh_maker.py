@@ -1,4 +1,5 @@
 from pprint import pprint
+import numpy as np
 '''
     |~~|~~|~~|~~|~~|~~| -
     | /| /| /| /| /| /| |
@@ -11,7 +12,7 @@ n   1  2  3  4  5  6  7 |
 
 class Node: # TODO: find a better name
 
-    def __init__(self, length, m, n_spines):
+    def __init__(self, length, layers, n_spines):
         '''
         Creates 2 matrices for mapping elements:
         - l: matrix mapping (element_idx, local velocity node number) to its global node number
@@ -27,10 +28,10 @@ class Node: # TODO: find a better name
         '''
         self.length = length
         self.n_spines = n_spines
-        self.m = m
+        self.layers = layers
 
-        self.offset = self.m * 2 + 1 # TODO: come up with a better name for offset between column 1 row 1 -> column 2 row 1
-        self.num_elements = self.m * (self.n_spines-1) # total number of elements (triangles)
+        self.offset = self.layers * 2 + 1 # TODO: come up with a better name for offset between column 1 row 1 -> column 2 row 1
+        self.num_elements = self.layers * (self.n_spines-1) # total number of elements (triangles)
         self.num_global_nodes = self.offset * self.n_spines
 
         self.l = [[0] * 6] * self.num_elements
@@ -53,8 +54,8 @@ class Node: # TODO: find a better name
         '''
         # TODO: question – do we always have even number of triangles in two columns? edge cases
         for el in range(0, self.num_elements, 2):
-            col = el // (2 * self.m) # each column pair has 2m elements
-            row = el % (2 * self.m)
+            col = el // (2 * self.layers) # each column pair has 2m elements
+            row = el % (2 * self.layers)
             start = col * 2 * self.offset + row
 
             self.l[el] = [start,
@@ -70,6 +71,14 @@ class Node: # TODO: find a better name
                               start + 1,
                               start + self.offset + 1,
                               start + self.offset + 2]
+            
+    def spine_height(self, i):
+        '''
+        A sine wave function that takes in ith spine (horizontally) and returns its height
+        '''
+        if i < self.n_spines:
+            x_coord = i * self.length / (self.n_spines - 1)
+            return self.height + np.sin(x_coord) # height of the spine varies around the initial height
 
     def coordinates_matrix(self):
         '''
