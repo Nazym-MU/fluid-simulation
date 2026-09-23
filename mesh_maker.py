@@ -11,7 +11,7 @@ n   1  2  3  4  5  6  7 |
     |--------l--------| -
 '''
 
-class Node: # TODO: find a better name
+class Mesh:
 
     def __init__(self, length, height, layers, n_spines):
         '''
@@ -32,13 +32,13 @@ class Node: # TODO: find a better name
         self.n_spines = n_spines
         self.layers = layers
 
-        self.offset = self.layers * 2 + 1 # TODO: come up with a better name for offset between column 1 row 1 -> column 2 row 1
+        self.nodes_per_col = self.layers * 2 + 1
         self.num_elements = self.layers * (self.n_spines-1) # total number of elements (triangles)
-        self.num_global_nodes = self.offset * self.n_spines
+        self.num_global_nodes = self.nodes_per_col * self.n_spines
 
-        self.l = [[0] * 6] * self.num_elements
+        self.loc2glob = [[0] * 6] * self.num_elements
 
-        self.s = [[0, 0]] * self.num_global_nodes
+        self.coords = [[0, 0]] * self.num_global_nodes
 
         self.element_matrix()
         self.coordinates_matrix()
@@ -58,21 +58,21 @@ class Node: # TODO: find a better name
         for el in range(0, self.num_elements, 2):
             col = el // (2 * self.layers) # each column pair has 2m elements
             row = el % (2 * self.layers)
-            start = col * 2 * self.offset + row
+            start = col * 2 * self.nodes_per_col + row
 
-            self.l[el] = [start,
-                          start + 2 * self.offset,
-                          start + 2 * self.offset + 2,
-                          start + self.offset + 1,
-                          start + self.offset,
-                          start + 2 * self.offset + 1]
+            self.loc2globl[el] = [start,
+                          start + 2 * self.nodes_per_col,
+                          start + 2 * self.nodes_per_col + 2,
+                          start + self.nodes_per_col + 1,
+                          start + self.nodes_per_col,
+                          start + 2 * self.nodes_per_col + 1]
             
-            self.l[el + 1] = [start,
-                              start + 2 * self.offset + 2,
+            self.loc2glob[el + 1] = [start,
+                              start + 2 * self.nodes_per_col + 2,
                               start + 2,
                               start + 1,
-                              start + self.offset + 1,
-                              start + self.offset + 2]
+                              start + self.nodes_per_col + 1,
+                              start + self.nodes_per_col + 2]
             
     def spine_height(self, i):
         '''
@@ -87,30 +87,30 @@ class Node: # TODO: find a better name
         Iterate through all columns and rows to set the coordinates and populate the coordinates matrix
         '''
         for gn in range(self.num_global_nodes):
-            col, row = gn // self.offset, gn % self.offset
+            col, row = gn // self.nodes_per_col, gn % self.nodes_per_col
             h = self.spine_height(col)
-            self.s[gn] = (col * self.length / (self.n_spines - 1), row / (2 * self.layers) * h)
+            self.coords[gn] = (col * self.length / (self.n_spines - 1), row / (2 * self.layers) * h)
         
     def element_to_global(self, element_idx):
         '''
         Returns the global node number
         '''
-        return self.l[element_idx]
+        return self.loc2glob[element_idx]
         
     def get_coordinates(self, global_node):
         '''
         Returns the coordinates of the global node
         '''
-        return self.s[global_node] # list, so that it's mutable
+        return self.coords[global_node] # list, so that it's mutable
     
     def plot(self):
         fig, ax = plt.subplots(figsize=(8, 5))
         ax.set_aspect('equal')
 
-        xs = [coord[0] for coord in self.s]
-        ys = [coord[1] for coord in self.s]
+        xs = [coord[0] for coord in self.coords]
+        ys = [coord[1] for coord in self.coords]
 
-        for nodes in self.l:
+        for nodes in self.loc2glob:
             for a, b in [(0,1),(1,2),(2,0)]:
                 ax.plot([xs[nodes[a]], xs[nodes[b]]], [ys[nodes[a]], ys[nodes[b]]], 'b-', lw=1)
             for gn in nodes:
@@ -123,4 +123,4 @@ class Node: # TODO: find a better name
 
     
 
-Node(10, 6, 2, 19).plot()
+Mesh(10, 6, 2, 19).plot()
