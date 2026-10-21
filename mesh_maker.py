@@ -21,7 +21,7 @@ class Mesh:
         ------------------------------------
         Inputs:
         length: the length of the container
-        m: the number of triangles in a single column
+        layers: the number of triangles in a single column
         n_spines: the number of spine (must be an odd number)
 
         Returns:
