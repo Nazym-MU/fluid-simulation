@@ -1,4 +1,4 @@
-def make_constants(length, height, amplitude, n_spines,  layers):
+def make_constants(length, height, n_spines,  layers):
     '''
     Inputs:
     - layers: the number of rectangular cells in a single column; one rectangular cell = 2 triangles
@@ -17,9 +17,6 @@ def make_constants(length, height, amplitude, n_spines,  layers):
     # fluid bath width and depth
     L_dim = length # m
     H_dim = height # m
-
-    # initial disturbance TODO: find what we need for an initial disturbance
-    amplitude = amplitude
 
     U_dim = sigma_dim / (rho_dim * nu_dim)
     T_dim = L_dim / U_dim
