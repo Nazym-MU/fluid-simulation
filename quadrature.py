@@ -127,4 +127,6 @@ def quadrature():
              'xi_lG': xi_lG,
              'W_lG': W_lG,
              'phi1_lG': phi1_lG,
-             'phi1_xi_lG': phi1_xi_lG }
+             'phi1_xi_lG': phi1_xi_lG,
+             'n_Gaussian_Q': n_Gaussian_Q,
+             'n_lGaussian_Q': n_lGaussian_Q }

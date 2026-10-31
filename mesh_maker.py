@@ -106,7 +106,7 @@ class Mesh:
 
         xs, zs = self.coords[:, 0], self.coords[:, 1]
 
-        # triangle edges (vertices only, straight lines)
+        # triangle edges
         ax.triplot(xs, zs, self.loc_to_glob[:, :3], color='b', lw=1)
 
         # all velocity nodes
