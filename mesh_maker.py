@@ -63,27 +63,28 @@ class Mesh:
         self.loc_to_glob_p[1::2] = start_p[:, None] + upper_p
 
         # free surface node numbering
-        self.surface_nodes = np.arange(1, self.n_spines + 1) * n - 1   # all nodes on ∂Ω¹, left to right
+        self.surface_nodes = np.arange(1, self.n_spines + 1) * n - 1 
         self.loc_to_glob_1 = np.column_stack([self.surface_nodes[:-1:2],
-                                        self.surface_nodes[1::2],
-                                        self.surface_nodes[2::2]])
-            
-    def surface_elevation(self, x):
-        '''
-        A sine wave function returns its elevation
-        '''
-        return 0.01 * np.sin(2 * np.pi * x / self.length)
+                                              self.surface_nodes[1::2],
+                                              self.surface_nodes[2::2]])
 
-    def coordinates_matrix(self):
+    def coordinates_matrix(self, z_surface=None):
         '''
-        Set the coordinates and populate the coordinates matrix
+        Places the nodes of each spine evenly between z = -H and the top of the surface.
+        Inputs:
+        - z_surface: an array of z-coordinates of the surface nodes.
+        One coordinate for each spine. x-coordinates stay fixed.
         '''
         gn = np.arange(self.num_global_nodes)
         col, row = gn // self.nodes_per_col, gn % self.nodes_per_col
-        x = col * self.length / (self.n_spines - 1)
-        zeta = self.surface_elevation(x)
-        z = -self.height + row / (2*self.layers) * (self.height + zeta)
-        self.coords = np.column_stack([x, z])
+        x_spines = np.arange(self.n_spines) * self.length / (self.n_spines - 1) # x positions of the spines
+
+        # Initial surface
+        if z_surface is None:
+            z_surface = 0.01 * np.sin(2 * np.pi * x_spines / self.length)
+
+        z = -self.height + (self.height + z_surface[col]) * row / (2*self.layers)
+        self.coords = np.column_stack([x_spines[col], z])
 
     def unknown_nodes(self):
         '''
