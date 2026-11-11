@@ -81,7 +81,7 @@ class Mesh:
 
         # Initial surface
         if z_surface is None:
-            z_surface = 0.01 * np.sin(2 * np.pi * x_spines / self.length)
+            z_surface = 0.1 * np.sin(2 * np.pi * x_spines / self.length)
 
         z = -self.height + (self.height + z_surface[col]) * row / (2*self.layers)
         self.coords = np.column_stack([x_spines[col], z])
