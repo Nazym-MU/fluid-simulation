@@ -200,10 +200,19 @@ def jacobian(mesh, quad, params, u, w, p, u_old, w_old, coords_old, delta_t):
                     # w.r.t w
                     diff_w_C[mesh.loc_to_glob_p[ee, ii], nodes[jj]] -= W_G[pp] * psi_G[ii, pp] * T[pp, jj] @ x_e
 
+        # w.r.t h
+        for qq in range(1, mesh.n_spines - 1):
+            diff_hq_z_e = diff_h_z_e * (spine_e == qq)
+
+            for ii in range(3):
+                for jj in range(6):
+                    for pp in range(n_Gaussian_Q):
+                        diff_h_C[mesh.loc_to_glob_p[ee, ii], qq - 1] += u_e[jj] * W_G[pp] * psi_G[ii, pp] * T[pp, jj] @ diff_hq_z_e
 
     for ee in range(len(mesh.loc_to_glob_1)):
         nodes_1 = mesh.loc_to_glob_1[ee]
         x_le, z_le = mesh.coords[nodes_1, 0], mesh.coords[nodes_1, 1]
+        u_le = u[nodes_1]
         J_le_1 = np.zeros(n_lGaussian_Q)
 
         # derivatives with respect to the master element parametrization:  x' and z'
@@ -223,7 +232,7 @@ def jacobian(mesh, quad, params, u, w, p, u_old, w_old, coords_old, delta_t):
                     # w.r.t w
                     diff_w_K[nodes_1[ii], nodes_1[jj]] += W_lG[pp] * phi1_lG[ii, pp] * phi1_lG[jj, pp] * diff_xi_x_l[pp]
 
-        # x and z momentum line terms:
+        # line terms:
         spine_l = spine[nodes_1]
         for qq in range(1, mesh.n_spines - 1):
             diff_hq_z_l = diff_h_z[nodes_1] * (spine_l == qq)
@@ -235,9 +244,17 @@ def jacobian(mesh, quad, params, u, w, p, u_old, w_old, coords_old, delta_t):
 
             for pp in range(n_lGaussian_Q):
                 for ii in range(3):
+                    # x momentum
                     diff_h_Mx[nodes_1[ii], qq - 1] -= 1/Ca * W_lG[pp] * diff_xi_x_l[pp] * diff_hq_J_le_1[pp] / J_le_1[pp]**2 * diff_xi_phi1_lG[ii, pp]
+                    # z momentum
                     diff_h_Mz[nodes_1[ii], qq - 1] += 1/Ca * W_lG[pp] * diff_hq_diff_xi_z_l[pp] / J_le_1[pp] * diff_xi_phi1_lG[ii, pp]
                     diff_h_Mz[nodes_1[ii], qq - 1] -= 1/Ca * W_lG[pp] * diff_xi_z_l[pp] * diff_hq_J_le_1[pp] / J_le_1[pp]**2 * diff_xi_phi1_lG[ii, pp]
+                    # KBC
+                    for jj in range(3):
+                        diff_h_K[nodes_1[ii], qq - 1] -= u_le[jj] * W_lG[pp] * phi1_lG[ii, pp] * phi1_lG[jj, pp] * diff_hq_diff_xi_z_l[pp]
+                        diff_h_K[nodes_1[ii], qq - 1] -= 1/delta_t * (diff_hq_z_l[jj]) * W_lG[pp] * phi1_lG[ii, pp] * phi1_lG[jj, pp] * diff_xi_x_l[pp]
+
+
 
     # creating the Jacobian
     JR = np.zeros()
