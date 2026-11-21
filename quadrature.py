@@ -48,25 +48,25 @@ def quadrature():
     W_G = 2*W_G # the weights are for a unit area triangle, so they need to be multiplied by the area of the triangle
 
     T = np.zeros((n_Gaussian_Q, 6, 6))
-    phi_xi = np.zeros((6,n_Gaussian_Q))
-    phi_eta = np.zeros((6,n_Gaussian_Q))
+    diff_xi_phi = np.zeros((6,n_Gaussian_Q))
+    diff_eta_phi = np.zeros((6,n_Gaussian_Q))
     for pp in range(n_Gaussian_Q):
-        phi_xi[0, pp] = 1/2 + xi_G[pp] + eta_G[pp]
-        phi_xi[1, pp] = 1/2 + xi_G[pp]
-        phi_xi[2, pp] = 0
-        phi_xi[3, pp] = -1 - eta_G[pp]
-        phi_xi[4, pp] = -1 - eta_G[pp] - 2 * xi_G[pp]
-        phi_xi[5, pp] = 1 + eta_G[pp]
-        phi_eta[0, pp] = 1/2 + xi_G[pp] + eta_G[pp] 
-        phi_eta[1, pp] = 0
-        phi_eta[2, pp] = 1/2 + eta_G[pp] 
-        phi_eta[3, pp] = -1 - xi_G[pp] - 2 * eta_G[pp]
-        phi_eta[4, pp] = -1 - xi_G[pp]
-        phi_eta[5, pp] = 1 + xi_G[pp]
+        diff_xi_phi[0, pp] = 1/2 + xi_G[pp] + eta_G[pp]
+        diff_xi_phi[1, pp] = 1/2 + xi_G[pp]
+        diff_xi_phi[2, pp] = 0
+        diff_xi_phi[3, pp] = -1 - eta_G[pp]
+        diff_xi_phi[4, pp] = -1 - eta_G[pp] - 2 * xi_G[pp]
+        diff_xi_phi[5, pp] = 1 + eta_G[pp]
+        diff_eta_phi[0, pp] = 1/2 + xi_G[pp] + eta_G[pp] 
+        diff_eta_phi[1, pp] = 0
+        diff_eta_phi[2, pp] = 1/2 + eta_G[pp] 
+        diff_eta_phi[3, pp] = -1 - xi_G[pp] - 2 * eta_G[pp]
+        diff_eta_phi[4, pp] = -1 - xi_G[pp]
+        diff_eta_phi[5, pp] = 1 + xi_G[pp]
 
         for ii in range(6):
             for jj in range(6):
-                T[pp, ii, jj] = phi_xi[ii, pp] * phi_eta[jj, pp] -phi_eta[ii, pp] * phi_xi[jj, pp]
+                T[pp, ii, jj] = diff_xi_phi[ii, pp] * diff_eta_phi[jj, pp] -diff_eta_phi[ii, pp] * diff_xi_phi[jj, pp]
 
     # Matrix psi_G stores the values of psi_i in each of the Guassian integration points
     psi_G = np.zeros((3,n_Gaussian_Q))
@@ -110,23 +110,23 @@ def quadrature():
         phi1_lG[1, pp] = 1-xi_lG[pp]**2
         phi1_lG[2, pp] = xi_lG[pp]**2 / 2 + xi_lG[pp]/2
 
-    phi1_xi_lG = np.zeros((3, n_lGaussian_Q))
+    diff_xi_phi1_lG = np.zeros((3, n_lGaussian_Q))
     for pp in range(n_lGaussian_Q):
-        phi1_xi_lG[0, pp] = xi_lG[pp] - 1/2
-        phi1_xi_lG[1, pp] = -2*xi_lG[pp]
-        phi1_xi_lG[2, pp] = xi_lG[pp] + 1/2
+        diff_xi_phi1_lG[0, pp] = xi_lG[pp] - 1/2
+        diff_xi_phi1_lG[1, pp] = -2*xi_lG[pp]
+        diff_xi_phi1_lG[2, pp] = xi_lG[pp] + 1/2
 
     return  {'xi_G': xi_G,
              'eta_G': eta_G,
              'W_G': W_G,
              'phi_G': phi_G,
              'psi_G': psi_G,
-             'phi_xi': phi_xi,
-             'phi_eta': phi_eta,
+             'diff_xi_phi': diff_xi_phi,
+             'diff_eta_phi': diff_eta_phi,
              'T': T,
              'xi_lG': xi_lG,
              'W_lG': W_lG,
              'phi1_lG': phi1_lG,
-             'phi1_xi_lG': phi1_xi_lG,
+             'diff_xi_phi1_lG': diff_xi_phi1_lG,
              'n_Gaussian_Q': n_Gaussian_Q,
              'n_lGaussian_Q': n_lGaussian_Q }

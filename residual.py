@@ -14,7 +14,7 @@ def residual(mesh, quad, params, u, w, p, u_old, w_old, coords_old, delta_t):
     phi_G = quad['phi_G']
     psi_G = quad['psi_G']
     phi1_lG = quad['phi1_lG']
-    phi1_xi_lG = quad['phi1_xi_lG']
+    diff_xi_phi1_lG = quad['diff_xi_phi1_lG']
     n_Gaussian_Q = quad['n_Gaussian_Q']
     n_lGaussian_Q = quad['n_lGaussian_Q']
     Re, St, Ca = params['Re'], params['St'], params['Ca']
@@ -126,38 +126,39 @@ def residual(mesh, quad, params, u, w, p, u_old, w_old, coords_old, delta_t):
         x_le, z_le = mesh.coords[nodes_1, 0], mesh.coords[nodes_1, 1]
         u_le, w_le = u[nodes_1], w[nodes_1]
         x_dot_le, z_dot_le = (x_le - coords_old[nodes_1, 0]) / delta_t, (z_le - coords_old[nodes_1, 1]) / delta_t
-        Jle = np.zeros(n_lGaussian_Q)
+        J_le_1 = np.zeros(n_lGaussian_Q)
 
         # derivatives with respect to the master element parametrization:  x' and z'
-        x_prime_l, z_prime_l = np.zeros(n_lGaussian_Q), np.zeros(n_lGaussian_Q)
+        diff_xi_x_l, diff_xi_z_l = np.zeros(n_lGaussian_Q), np.zeros(n_lGaussian_Q)
 
         for pp in range(n_lGaussian_Q):
-            x_prime_l[pp], z_prime_l[pp] = phi1_xi_lG[:, pp] @ x_le, phi1_xi_lG[:, pp] @ z_le
+            diff_xi_x_l[pp], diff_xi_z_l[pp] = diff_xi_phi1_lG[:, pp] @ x_le, diff_xi_phi1_lG[:, pp] @ z_le
 
             # length of the tangent
-            Jle[pp] = np.sqrt(x_prime_l[pp]**2 + z_prime_l[pp]**2)
+            J_le_1[pp] = np.sqrt(diff_xi_x_l[pp]**2 + diff_xi_z_l[pp]**2)
+
 
         # x-momentum residual
         # eq. 122
         for ii in range(3):
             for pp in range(n_lGaussian_Q):
-                Mx[nodes_1[ii]] += 1/Ca * W_lG[pp] * x_prime_l[pp] * phi1_xi_lG[ii, pp] / Jle[pp]
+                Mx[nodes_1[ii]] += 1/Ca * W_lG[pp] * diff_xi_x_l[pp] * diff_xi_phi1_lG[ii, pp] / J_le_1[pp]
 
         # z-momentum residual
         # eq. 123
         for ii in range(3):
             for pp in range(n_lGaussian_Q):
-                Mz[nodes_1[ii]] += 1/Ca * W_lG[pp] * z_prime_l[pp] * phi1_xi_lG[ii, pp] / Jle[pp]
+                Mz[nodes_1[ii]] += 1/Ca * W_lG[pp] * diff_xi_z_l[pp] * diff_xi_phi1_lG[ii, pp] / J_le_1[pp]
 
         # KBC residual
         # eqs. 125-126
         for ii in range(3):
             for jj in range(3):
                 for pp in range(n_lGaussian_Q):
-                    K[nodes_1[ii]] -= u_le[jj] * W_lG[pp] * phi1_lG[ii, pp] * phi1_lG[jj, pp] * z_prime_l[pp]
-                    K[nodes_1[ii]] += x_dot_le[jj] * W_lG[pp] * phi1_lG[ii, pp] * phi1_lG[jj, pp] * z_prime_l[pp]
-                    K[nodes_1[ii]] += w_le[jj] * W_lG[pp] * phi1_lG[ii, pp] * phi1_lG[jj, pp] * x_prime_l[pp]
-                    K[nodes_1[ii]] -= z_dot_le[jj] * W_lG[pp] * phi1_lG[ii, pp] * phi1_lG[jj, pp] * x_prime_l[pp]
+                    K[nodes_1[ii]] -= u_le[jj] * W_lG[pp] * phi1_lG[ii, pp] * phi1_lG[jj, pp] * diff_xi_z_l[pp]
+                    K[nodes_1[ii]] += x_dot_le[jj] * W_lG[pp] * phi1_lG[ii, pp] * phi1_lG[jj, pp] * diff_xi_z_l[pp]
+                    K[nodes_1[ii]] += w_le[jj] * W_lG[pp] * phi1_lG[ii, pp] * phi1_lG[jj, pp] * diff_xi_x_l[pp]
+                    K[nodes_1[ii]] -= z_dot_le[jj] * W_lG[pp] * phi1_lG[ii, pp] * phi1_lG[jj, pp] * diff_xi_x_l[pp]
 
     # return the values for the unknown indices
     return np.concatenate([Mx[mesh.u_unknown], Mz[mesh.w_unknown], C, K[mesh.surface_unknown]])

@@ -36,7 +36,7 @@ class Mesh:
 
     
     def element_matrix(self):
-        r'''
+        '''
             2
             |\ 
            3| \ 5
@@ -67,6 +67,7 @@ class Mesh:
         self.loc_to_glob_1 = np.column_stack([self.surface_nodes[:-1:2],
                                               self.surface_nodes[1::2],
                                               self.surface_nodes[2::2]])
+
 
     def coordinates_matrix(self, z_surface=None):
         '''
