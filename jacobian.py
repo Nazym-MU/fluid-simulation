@@ -256,5 +256,61 @@ def jacobian(mesh, quad, params, u, w, p, u_old, w_old, coords_old, delta_t):
 
 
 
-    # creating the Jacobian
-    JR = np.zeros()
+    # creating the Jacobian (a square matrix)
+
+    # number of rows:
+    # = unknown Mx [all nodes - wall nodes], i.e. u_unknown
+    # + unknown Mz [all nodes - wall nodes], i.e. w_unknown
+    # + unknown C [all pressure nodes], i.e. p_unknown
+    # + unknown K [all surface nodes - wall nodes], i.e. surface_unknown
+    
+    # number of cols: u_unknown + w_unknown + p_unknown + surface_unknown
+    
+    n_u_uk = len(mesh.u_unknown)
+    n_w_uk = len(mesh.w_unknown)
+    n_p_uk = len(mesh.p_unknown)
+    n_surface_uk = len(mesh.surface_unknown)
+
+    row_u, row_w, row_p, row_h = 0, n_u_uk, n_u_uk + n_w_uk, n_u_uk + n_w_uk + n_p_uk
+    col_u, col_w, col_p, col_h = 0, n_u_uk, n_u_uk + n_w_uk, n_u_uk + n_w_uk + n_p_uk
+
+    JR = np.zeros((n_u_uk + n_w_uk + n_p_uk + n_surface_uk,
+                  n_u_uk + n_w_uk + n_p_uk + n_surface_uk))
+
+# 1st block row of the Jacobian (Mx)
+    # derivative of Mx w.r.t u
+    JR[row_u:row_w, col_u:col_w] = diff_u_Mx[mesh.u_unknown][:, mesh.u_unknown]
+    # derivative of Mx w.r.t w
+    JR[row_u:row_w, col_w:col_p] = diff_w_Mx[mesh.u_unknown][:, mesh.w_unknown]
+    # derivative of Mx w.r.t p
+    JR[row_u:row_w, col_p:col_h] = diff_p_Mx[mesh.u_unknown][:, mesh.p_unknown]
+    # derivative of Mx w.r.t h
+    JR[row_u:row_w, col_h:] =  diff_h_Mx[mesh.u_unknown]
+
+# 2nd block row of the Jacobian (Mz)
+    # derivative of Mz w.r.t u
+    JR[row_w:row_p, col_u:col_w] = diff_u_Mz[mesh.w_unknown][:, mesh.u_unknown]
+    # derivative of Mz w.r.t w
+    JR[row_w:row_p, col_w:col_p] = diff_w_Mz[mesh.w_unknown][:, mesh.w_unknown]
+    # derivative of Mz w.r.t p
+    JR[row_w:row_p, col_p:col_h] = diff_p_Mz[mesh.w_unknown][:, mesh.p_unknown]
+    # derivative of Mz w.r.t h
+    JR[row_w:row_p, col_h:] =  diff_h_Mz[mesh.w_unknown]
+
+# 3rd block row of the Jacobian (C)
+    # derivative of C w.r.t u
+    JR[row_p:row_h, col_u:col_w] = diff_u_C[mesh.p_unknown][:, mesh.u_unknown]
+    # derivative of C w.r.t w
+    JR[row_p:row_h, col_w:col_p] = diff_w_C[mesh.p_unknown][:, mesh.w_unknown]
+    # derivative of C w.r.t h
+    JR[row_p:row_h, col_h:] =  diff_h_C[mesh.p_unknown]
+
+# 4th block row of the Jacobian (K)
+    # derivative of K w.r.t u
+    JR[row_h:, col_u:col_w] = diff_u_K[mesh.surface_unknown][:, mesh.u_unknown]
+    # derivative of K w.r.t w
+    JR[row_h:, col_w:col_p] = diff_w_K[mesh.surface_unknown][:, mesh.w_unknown]
+    # derivative of K w.r.t h
+    JR[row_h:, col_h:] =  diff_h_K[mesh.surface_unknown]
+
+    return JR
